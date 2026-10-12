@@ -1,0 +1,300 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>*{box-sizing:border-box}body{margin:0}[hidden]{display:none!important}</style>
+<title>Ahorcado del Elenco Color</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Rozha+One&family=Libre+Franklin:wght@400;600;700&display=swap">
+<style>
+/* Layout: escenario a oscuras — horca bajo un seguidor a la izquierda, nombre + teclado a la derecha; se apila en móvil.
+   Diseño deliberadamente de un solo tema (sala de teatro con luces apagadas). */
+:root{
+  --bg:#1e0b3a; --panel:#2c1352; --velvet:#ff3d7f; --fg:#fff6e6; --muted:#c9b6ef; --line:#4a2a7a;
+  --gold:#ffc83d; --gold-ink:#2a1200; --ok:#2ee6c5; --bad:#ff6b4a;
+  --pink:#ff3d7f; --cyan:#2ec8ff; --lime:#b6f24a; --orange:#ff8a1f;
+  --display:"Rozha One",Georgia,serif; --body:"Libre Franklin",system-ui,sans-serif;
+  color-scheme:dark;
+}
+html,body{height:100%}
+body{background:var(--bg);color:var(--fg);font-family:var(--body);font-size:15px;padding:0 16px;
+  background-attachment:fixed;
+  background-image:
+    radial-gradient(ellipse 45% 40% at 10% 0%,rgba(255,61,127,.38),transparent 70%),
+    radial-gradient(ellipse 45% 40% at 50% 0%,rgba(255,200,61,.28),transparent 70%),
+    radial-gradient(ellipse 45% 40% at 90% 0%,rgba(46,200,255,.35),transparent 70%),
+    radial-gradient(ellipse 60% 35% at 50% 100%,rgba(182,242,74,.14),transparent 70%);}
+h1{background:linear-gradient(90deg,var(--pink),var(--gold) 50%,var(--cyan));-webkit-background-clip:text;background-clip:text;color:transparent}
+.stage,.marquee{box-shadow:0 0 0 1px var(--line),0 12px 40px rgba(255,61,127,.18)}
+.marquee{border-color:var(--pink)!important}
+.slot{border-bottom-width:4px!important}
+.wgrp .slot:nth-child(4n+1){border-color:var(--pink)} .wgrp .slot:nth-child(4n+2){border-color:var(--gold)}
+.wgrp .slot:nth-child(4n+3){border-color:var(--cyan)} .wgrp .slot:nth-child(4n){border-color:var(--lime)}
+.kb button:nth-child(4n+1).hit{background:var(--pink);border-color:var(--pink);color:#fff}
+.kb button:nth-child(4n+2).hit{background:var(--gold);border-color:var(--gold);color:var(--gold-ink)}
+.kb button:nth-child(4n+3).hit{background:var(--cyan);border-color:var(--cyan);color:#06243a}
+.kb button:nth-child(4n).hit{background:var(--lime);border-color:var(--lime);color:#1c2a05}
+body .kb button{border-radius:10px} body .btn{border-radius:999px}
+/* Formato celular: una sola columna angosta en cualquier pantalla */
+body .wrap{max-width:460px;padding-block:14px 28px;gap:14px}
+body header{padding-bottom:12px;gap:10px}
+body h1{font-size:clamp(28px,8.5vw,38px)}
+body .board{grid-template-columns:minmax(0,1fr);gap:14px}
+body .stage{flex-direction:row;align-items:center;gap:12px;padding:10px 14px}
+body .stage svg{width:42%;max-width:150px;flex:none}
+body .lives{flex-direction:column;gap:4px;flex:1;align-items:flex-start}
+body .lives b{font-size:28px;font-family:var(--display)}
+body .play{gap:14px}
+body .word{gap:12px 18px;min-height:0;justify-content:center}
+body .wgrp{gap:4px}
+body .slot{width:clamp(24px,8vw,34px);height:44px;font-size:clamp(22px,6.5vw,30px)}
+body .kb{grid-template-columns:repeat(7,minmax(0,1fr));gap:6px}
+body .kb button{font-size:18px;min-height:44px;aspect-ratio:auto}
+body .actions .btn{flex:1 1 auto;min-height:46px}
+body .marquee{padding:16px 14px}
+body .guessForm input,body .guessForm .btn{flex:1 1 100%;max-width:none;min-height:48px}
+body .btn.primary{background:linear-gradient(90deg,var(--pink),var(--orange));border-color:transparent;color:#fff}
+.wrap{max-width:1040px;margin:0 auto;padding-block:28px 40px;display:flex;flex-direction:column;gap:22px}
+header{display:flex;flex-wrap:wrap;align-items:end;justify-content:space-between;gap:14px;border-bottom:1px solid var(--line);padding-bottom:16px}
+.eyebrow{font:700 11px var(--body);letter-spacing:.22em;text-transform:uppercase;color:var(--gold);margin:0 0 6px}
+h1{font-family:var(--display);font-weight:400;font-size:clamp(32px,6vw,52px);margin:0;line-height:1;text-wrap:balance}
+.acts{display:flex;gap:8px;align-items:center;font-size:12px;color:var(--muted);letter-spacing:.08em;text-transform:uppercase}
+.acts i{width:12px;height:12px;border-radius:50%;border:1px solid var(--gold)}
+.acts i.done{background:var(--gold)} .acts i.now{box-shadow:0 0 0 3px rgba(216,169,74,.3)}
+.board{display:grid;grid-template-columns:minmax(0,330px) minmax(0,1fr);gap:22px;align-items:start}
+@media (max-width:760px){.board{grid-template-columns:minmax(0,1fr)}}
+.stage{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:16px;display:flex;flex-direction:column;gap:12px}
+.stage svg{width:100%;max-width:100%;height:auto;display:block}
+.lives{display:flex;justify-content:space-between;font-size:12px;color:var(--muted);letter-spacing:.08em;text-transform:uppercase}
+.lives b{color:var(--fg);font-variant-numeric:tabular-nums}
+.play{display:flex;flex-direction:column;gap:20px;min-width:0}
+.meta{display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px;align-items:baseline}
+.tag{font:700 11px var(--body);text-transform:uppercase;letter-spacing:.2em;color:var(--gold)}
+.result{font:400 22px var(--display)}
+.result.win{color:var(--ok)} .result.lose{color:var(--bad)}
+.word{display:flex;flex-wrap:wrap;gap:16px 26px;min-height:64px}
+.wgrp{display:flex;gap:6px}
+.slot{width:clamp(24px,5vw,38px);height:clamp(40px,7vw,54px);border-bottom:3px solid var(--gold);display:grid;place-items:center;font:400 clamp(22px,4.4vw,34px) var(--display);color:var(--fg)}
+.slot.miss{color:var(--bad);border-color:var(--bad)}
+.slot.pop{animation:pop .3s ease-out}
+@keyframes pop{from{transform:translateY(-8px);opacity:.1}}
+.kb{display:grid;grid-template-columns:repeat(9,minmax(0,1fr));gap:6px}
+.kb button{font:700 16px var(--body);aspect-ratio:1/1;max-width:100%;border-radius:4px;border:1px solid var(--line);background:var(--panel);color:var(--fg);cursor:pointer;transition:transform .08s,border-color .15s}
+.kb button:hover:not(:disabled){border-color:var(--gold)}
+.kb button:active:not(:disabled){transform:scale(.94)}
+.kb button.hit{background:var(--gold);border-color:var(--gold);color:var(--gold-ink)}
+.kb button.no{background:transparent;color:var(--muted);opacity:.4;text-decoration:line-through}
+.kb button:disabled{cursor:default}
+.actions{display:flex;flex-wrap:wrap;gap:10px}
+.btn{font:600 14px var(--body);padding:11px 18px;border-radius:4px;border:1px solid var(--line);background:var(--panel);color:var(--fg);cursor:pointer}
+.btn.primary{background:var(--gold);border-color:var(--gold);color:var(--gold-ink)}
+button:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+.marquee{position:relative;overflow:hidden;border:1px solid var(--gold);border-radius:6px;padding:18px;text-align:center;background:var(--panel)}
+.marquee #tries{font-variant-numeric:tabular-nums}
+.curtain{position:absolute;top:0;bottom:0;width:51%;z-index:2;transition:transform .9s cubic-bezier(.6,.05,.3,1);
+  background:repeating-linear-gradient(90deg,#5a0f19 0 14px,#7e1726 14px 26px,#5a0f19 26px 34px)}
+.curtain.l{left:0;transform:translateX(-101%)} .curtain.r{right:0;transform:translateX(101%)}
+.marquee.closed .curtain{transform:translateX(0)}
+.curtainMsg{position:absolute;inset:0;z-index:3;display:grid;place-items:center;font:400 clamp(22px,4vw,32px) var(--display);color:var(--fg);opacity:0;transition:opacity .4s .8s;pointer-events:none}
+.marquee.closed .curtainMsg{opacity:1}
+.marquee.won h2{color:var(--gold);text-shadow:0 0 24px rgba(216,169,74,.55);animation:glow 1.2s ease-out}
+@keyframes glow{from{transform:scale(.85);opacity:0}}
+.shake{animation:shake .4s}
+@keyframes shake{20%,60%{transform:translateX(-8px)}40%,80%{transform:translateX(8px)}}
+#fx{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:10}
+.marquee p{margin:0 0 6px;font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--gold)}
+.marquee h2{margin:0;font:400 clamp(24px,4.5vw,38px) var(--display);text-wrap:balance}
+.marquee h2.locked{color:var(--muted);font-size:clamp(18px,3vw,24px)}
+.guessForm{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:16px}
+.guessForm input{flex:1 1 220px;max-width:420px;min-width:0;font:400 16px var(--body);padding:11px 14px;border-radius:4px;border:1px solid var(--line);background:var(--bg);color:var(--fg)}
+.guessForm input:focus-visible{outline:3px solid var(--gold);outline-offset:1px}
+.guessMsg{margin:10px 0 0!important;min-height:1.2em;font-size:14px!important;letter-spacing:0!important;text-transform:none!important;color:var(--muted)!important}
+.guessMsg.ok{color:var(--ok)!important} .guessMsg.bad{color:var(--bad)!important}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+footer{color:var(--muted);font-size:13px}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header>
+    <div>
+      <p class="eyebrow" style="text-transform:uppercase;letter-spacing:.06em;font-size:14px;line-height:1.4">Si, una actor define la obra.<br>No cambia que sienta verguenza :)</p>
+      <h1>¿Quién sube al escenario?</h1>
+    </div>
+    <div class="acts" id="acts" aria-label="Progreso del elenco"></div>
+  </header>
+
+  <section class="board">
+    <div class="stage">
+      <svg viewBox="0 0 240 260" role="img" aria-label="Horca">
+        <ellipse cx="150" cy="248" rx="80" ry="8" fill="rgba(216,169,74,.18)"/>
+        <g stroke="var(--muted)" stroke-width="6" stroke-linecap="round" fill="none">
+          <line x1="20" y1="248" x2="130" y2="248"/>
+          <line x1="50" y1="248" x2="50" y2="20"/>
+          <line x1="50" y1="20" x2="160" y2="20"/>
+          <line x1="50" y1="56" x2="86" y2="20"/>
+        </g>
+        <line x1="160" y1="20" x2="160" y2="52" stroke="var(--gold)" stroke-width="3"/>
+        <g id="fig" stroke="var(--fg)" stroke-width="5" stroke-linecap="round" fill="none">
+          <circle data-p="0" cx="160" cy="70" r="18"/>
+          <line data-p="1" x1="160" y1="88" x2="160" y2="150"/>
+          <line data-p="2" x1="160" y1="104" x2="132" y2="132"/>
+          <line data-p="3" x1="160" y1="104" x2="188" y2="132"/>
+          <line data-p="4" x1="160" y1="150" x2="138" y2="196"/>
+          <line data-p="5" x1="160" y1="150" x2="182" y2="196"/>
+        </g>
+      </svg>
+      <div class="lives"><span>Errores</span><b id="errTxt">0 / 5</b></div>
+    </div>
+
+    <div class="play">
+      <div class="meta"><span class="tag" id="roundTag"></span><span class="result" id="result" aria-live="polite"></span></div>
+      <div class="word" id="word" aria-label="Nombre a adivinar"></div>
+      <div class="kb" id="kb"></div>
+      <div class="actions">
+        <button class="btn primary" id="btnNext" hidden>Siguiente actor</button>
+        <button class="btn" id="btnRetry" hidden>Reintentar</button>
+        <button class="btn" id="btnRestart">Empezar de nuevo</button>
+      </div>
+    </div>
+  </section>
+
+  <div class="marquee">
+    <div class="curtain l" aria-hidden="true"></div><div class="curtain r" aria-hidden="true"></div>
+    <div class="curtainMsg" id="curtainMsg" aria-hidden="true">Telón. Sin intentos.</div>
+    <p>Arriesgar la obra · <span id="tries">0/3</span></p>
+    <h2 id="title" class="locked">Manu, ¿ya sabés cuál es?</h2>
+    <form class="guessForm" id="guessForm">
+      <label for="titleGuess" class="sr">Arriesgá el nombre de la obra</label>
+      <input id="titleGuess" type="text" autocomplete="off" placeholder="Arriesgá el nombre de la obra">
+      <button class="btn primary" type="submit">Arriesgar</button>
+    </form>
+    <p class="guessMsg" id="guessMsg" aria-live="polite"></p>
+  </div>
+
+</div>
+
+<script>
+/* ===== Configuración: elenco y título ===== */
+const CAST = [
+  "MIGUEL ÁNGEL CHERUTTI"
+];
+const PLAY_TITLE = ""; // completar con el nombre de la obra
+/* ========================================== */
+
+const LETTERS="ABCDEFGHIJKLMNÑOPQRSTUVWXYZ".split("");
+const MAX=5;
+const norm=c=>c==="Ñ"?"Ñ":c.normalize("NFD").replace(/[̀-ͯ]/g,"");
+const $=id=>document.getElementById(id);
+const parts=[...document.querySelectorAll("#fig [data-p]")];
+let idx=0,guessed=new Set(),errors=0,over=false,solved=0;
+
+LETTERS.forEach(L=>{const b=document.createElement("button");b.textContent=L;b.id="k"+L;b.setAttribute("aria-label","Letra "+L);b.onclick=()=>guess(L);$("kb").appendChild(b)});
+CAST.forEach(()=>$("acts").appendChild(document.createElement("i")));
+
+function start(i){
+  idx=i;guessed=new Set();errors=0;over=false;
+  $("roundTag").textContent="Actor "+(idx+1)+" de "+CAST.length;
+  $("result").textContent="";$("result").className="result";
+  $("btnNext").hidden=true;$("btnRetry").hidden=true;
+  LETTERS.forEach(L=>{const b=$("k"+L);b.className="";b.disabled=false});
+  render();
+}
+function render(reveal){
+  const w=$("word");w.innerHTML="";
+  CAST[idx].split(" ").forEach(part=>{
+    const g=document.createElement("div");g.className="wgrp";
+    [...part].forEach(ch=>{
+      const s=document.createElement("div");s.className="slot";
+      if(guessed.has(norm(ch)))s.textContent=ch;
+      else if(reveal){s.textContent=ch;s.classList.add("miss")}
+      g.appendChild(s);
+    });
+    w.appendChild(g);
+  });
+  const shown=errors>=MAX?parts.length:errors; // el último error completa las dos piernas
+  parts.forEach((p,i)=>p.style.display=i<shown?"":"none");
+  $("fig").setAttribute("stroke",over&&errors>=MAX?"var(--bad)":"var(--fg)");
+  $("errTxt").textContent=errors+" / "+MAX;
+  [...$("acts").children].forEach((d,i)=>{d.className=i<solved?"done":i===idx?"now":""});
+}
+function guess(L){
+  if(over||guessed.has(L))return;
+  guessed.add(L);
+  const letters=[...CAST[idx].replace(/ /g,"")].map(norm);
+  const hit=letters.includes(L);
+  const b=$("k"+L);b.disabled=true;b.classList.add(hit?"hit":"no");
+  if(!hit)errors++;
+  const won=letters.every(c=>guessed.has(c));
+  if(won||errors>=MAX){
+    over=true;
+    LETTERS.forEach(x=>$("k"+x).disabled=true);
+    if(won){
+      solved=Math.max(solved,idx+1);
+      $("result").textContent="¡Bravo!";$("result").className="result win";
+      if(idx+1<CAST.length)$("btnNext").hidden=false; else finish();
+    }else{
+      $("result").textContent="Cayó el telón";$("result").className="result lose";
+      $("btnRetry").hidden=false;
+    }
+    render(!won);
+  }else render();
+  if(hit)document.querySelectorAll(".slot").forEach(s=>{if(norm(s.textContent)===L)s.classList.add("pop")});
+}
+function finish(){
+  if(PLAY_TITLE)revealTitle();
+}
+const MAX_TRIES=3;let tries=0;
+function revealTitle(){
+  const t=$("title");t.textContent=PLAY_TITLE;t.classList.remove("locked");
+  $("guessForm").hidden=true;$("guessMsg").textContent="";
+  document.querySelector(".marquee").classList.add("won");
+  confetti();
+}
+function confetti(){
+  if(matchMedia("(prefers-reduced-motion: reduce)").matches)return;
+  const c=document.createElement("canvas");c.id="fx";document.body.appendChild(c);
+  const x=c.getContext("2d"),W=c.width=innerWidth,H=c.height=innerHeight;
+  const cols=["#d8a94a","#f4ead8","#b8862e","#e2685a"];
+  const p=Array.from({length:140},()=>({x:Math.random()*W,y:-Math.random()*H*.6,vx:(Math.random()-.5)*2,vy:2+Math.random()*3,r:Math.random()*6.3,s:4+Math.random()*6,c:cols[Math.floor(Math.random()*4)]}));
+  let t0=performance.now();
+  (function f(t){
+    x.clearRect(0,0,W,H);
+    p.forEach(q=>{q.x+=q.vx;q.y+=q.vy;q.r+=.1;x.save();x.translate(q.x,q.y);x.rotate(q.r);x.fillStyle=q.c;x.fillRect(-q.s/2,-q.s/4,q.s,q.s/2);x.restore()});
+    if(t-t0<4000)requestAnimationFrame(f);else c.remove();
+  })(t0);
+}
+function lockTitle(){
+  $("guessForm").hidden=true;
+  $("guessMsg").textContent="";
+  document.querySelector(".marquee").classList.add("closed");
+}
+const clean=s=>s.toUpperCase().normalize("NFD").replace(/[̀-ͯ]/g,"").replace(/[^A-Z0-9Ñ ]/g,"").replace(/\s+/g," ").trim();
+$("guessForm").addEventListener("submit",e=>{
+  e.preventDefault();
+  const v=$("titleGuess").value, m=$("guessMsg");
+  if(!v.trim()){m.textContent="Escribí un nombre para arriesgar.";m.className="guessMsg";return}
+  tries++;$("tries").textContent=tries+"/"+MAX_TRIES; // todo intento cuenta como error: la obra no se adivina
+  const f=$("guessForm");f.classList.remove("shake");void f.offsetWidth;f.classList.add("shake");
+  $("titleGuess").value="";
+  if(tries>=MAX_TRIES){lockTitle();return}
+  const left=MAX_TRIES-tries;
+  m.textContent="No es esa. Te queda"+(left>1?"n "+left+" intentos.":" 1 intento.");m.className="guessMsg bad";
+});
+$("btnNext").onclick=()=>start(idx+1);
+$("btnRetry").onclick=()=>start(idx);
+$("btnRestart").onclick=()=>{solved=0;const t=$("title");t.className="locked";t.textContent="Manu, ¿ya sabés cuál es?";$("guessForm").hidden=false;$("titleGuess").value="";$("guessMsg").textContent="";tries=0;$("tries").textContent="0/"+MAX_TRIES;document.querySelector(".marquee").classList.remove("won","closed");start(0)};
+document.addEventListener("keydown",e=>{
+  if(e.ctrlKey||e.metaKey||e.altKey)return;
+  if(e.target.closest&&e.target.closest("input"))return;
+  if(e.key==="Enter"&&over){(!$("btnNext").hidden?$("btnNext"):$("btnRetry")).click();return}
+  const k=norm(e.key.toUpperCase());
+  if(LETTERS.includes(k)){e.preventDefault();guess(k)}
+});
+start(0);
+</script>
+</body>
+</html>
